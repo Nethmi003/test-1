@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Editor Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: gray ;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: midnightblue;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            background:  skyblue;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 36px;
+        }
+
+        .btn:hover {
+            background: aqua;
+        }
+
+        .btn.active {
+            background: black
+        }
+        .btn img {
+            width: 18px;
+            height: 18px   
+        }
+
+        
+
+        .color-picker {
+            width: 40px;
+            height: 36px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: darkturquoise;
+        }
+
+        .editor {
+            min-height: 400px;
+            padding: 20px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            font-family: Arial, sans-serif;
+        }
+
+        .divider {
+            width: 1px;
+            height: 25px;
+            background:lightslategray;
+            margin: 0 5px;
+        }
+
+        h1 {
+            text-align: center;
+            color: black
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+       
+        
+
+    </style>
+</head>
+<body>
+    <h1>Text Editor</h1>
+    
+   
+    
+    <div class="container">
+        <div class="toolbar">
+           
+            <button class="btn" id="boldBtn" title="Bold">
+                <img src="Resourse/Bold.jpeg" alt="Bold" >
+            </button>
+            
+            <button class="btn" id="underlineBtn" title="Underline">
+                <img src="Resourse/Underline.jpeg" alt="Underline" >
+            </button>
+            
+            <button class="btn" id="italicBtn" title="Italic">
+                <img src="Resourse/Italic.jpeg" alt="Italic" >
+            </button>
+            
+            <div class="divider"></div>
+            
+           
+            <input type="color" class="color-picker" id="fontColor" title="Font Color" value="black">
+            
+            <div class="divider"></div>
+            
+            
+            <button class="btn" id="alignLeft" title="Align Left">
+                <img src="Resourse/Alignleft.jpeg" alt="Align Left" >
+            </button>
+            
+            <button class="btn" id="alignCenter" title="Align Center">
+                <img src="Resourse/Aligncenter.jpeg" alt="Align Center" >
+            </button>
+            
+            <button class="btn" id="alignRight" title="Align Right">
+                <img src="Resourse/Alignright.jpeg" alt="Align Right" >
+            </button>
+            
+            <button class="btn" id="alignJustify" title="Justify">
+                <img src="Resourse/Justify.jpeg" alt="Justify" >
+            </button>
+            
+            <div class="divider"></div>
+        
+            <button class="btn" id="undoBtn" title="Undo">
+                <img src="Resourse/undo.jpeg" alt="Undo" >
+            </button>
+            
+            <button class="btn" id="redoBtn" title="Redo">
+                <img src="Resourse/redo.jpeg" alt="Redo" >
+            </button>
+        </div>
+        
+        <div class="editor" contenteditable="true" id="textEditor">
+            <p>This is a sample paragraph in the text editor. You can select this text and apply various formatting options like bold, italic, underline, and change colors using the toolbar above. You can also change the alignment of this paragraph using the alignment buttons.</p>
+            
+            <p>This is another paragraph to demonstrate multiple paragraphs. Feel free to edit this content, add new paragraphs, or delete this sample text and start writing your own content. The undo and redo buttons will help you manage your changes.</p>
+            
+            <p>Start typing here or replace this content with your own text...</p>
+        </div>
+    </div>
+
+    <script>
+        // Get references to elements
+        const editor = document.getElementById('textEditor');
+        const boldBtn = document.getElementById('boldBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const fontColor = document.getElementById('fontColor');
+        const alignLeft = document.getElementById('alignLeft');
+        const alignCenter = document.getElementById('alignCenter');
+        const alignRight = document.getElementById('alignRight');
+        const alignJustify = document.getElementById('alignJustify');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+
+        // History for undo/redo functionality
+        let history = [];
+        let historyIndex = -1;
+        let isUpdatingHistory = false;
+
+        
+        function initializeHistory() {
+            history = [editor.innerHTML];
+            historyIndex = 0;
+        }
+        function saveToHistory() {
+            if (isUpdatingHistory) return;
+            
+            const currentContent = editor.innerHTML
+            history = history.slice(0, historyIndex + 1)
+            if (history[historyIndex] !== currentContent) {
+                history.push(currentContent);
+                historyIndex++;
+                if (history.length > 50) {
+                    history.shift();
+                    historyIndex--;
+                }
+            }
+        }
+        function formatText(command, value = null) {
+            document.execCommand(command, false, value);
+            updateButtonStates();
+            saveToHistory();
+        }
+        function updateButtonStates() {
+            boldBtn.classList.toggle('active', document.queryCommandState('bold'));
+            underlineBtn.classList.toggle('active', document.queryCommandState('underline'));
+            italicBtn.classList.toggle('active', document.queryCommandState('italic'));
+        }
+        boldBtn.addEventListener('click', () => formatText('bold'));
+        underlineBtn.addEventListener('click', () => formatText('underline'));
+        italicBtn.addEventListener('click', () => formatText('italic'));
+        fontColor.addEventListener('change', (e) => {
+            formatText('foreColor', e.target.value);
+        });
+        alignLeft.addEventListener('click', () => formatText('justifyLeft'));
+        alignCenter.addEventListener('click', () => formatText('justifyCenter'));
+        alignRight.addEventListener('click', () => formatText('justifyRight'));
+        alignJustify.addEventListener('click', () => formatText('justifyFull'));
+        undoBtn.addEventListener('click', () => {
+            if (historyIndex > 0) {
+                historyIndex--;
+                isUpdatingHistory = true;
+                editor.innerHTML = history[historyIndex];
+                isUpdatingHistory = false;
+                updateButtonStates();
+            }
+        });
+        redoBtn.addEventListener('click', () => {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                isUpdatingHistory = true;
+                editor.innerHTML = history[historyIndex];
+                isUpdatingHistory = false;
+                updateButtonStates();
+            }
+        });
+        editor.addEventListener('input', () => {
+            setTimeout(saveToHistory, 100); 
+        editor.addEventListener('mouseup', updateButtonStates);
+        editor.addEventListener('keyup', updateButtonStates);
+        editor.addEventListener('dragstart', (e) => e.preventDefault());
+        initializeHistory();
+        updateButtonStates();
+        window.addEventListener('load', () => {
+            editor.focus();
+        });
+    
+    </script>
+</body>
+</html>
